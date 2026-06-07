@@ -1,22 +1,35 @@
 import { useEffect, useState } from "react";
-import { fetchRisk, refreshRisk, type RiskResult } from "./api";
+import {
+  fetchRisk,
+  refreshRisk,
+  fetchUsReference,
+  fetchBacktest,
+  type RiskResult,
+} from "./api";
 import { fetchConfig, DEFAULT_CONFIG, type PlatformConfig } from "./lib/config";
+import type { BacktestResponse, UsReferenceResponse } from "./types";
 import Header from "./components/Header";
 import RiskGauge from "./components/RiskGauge";
 import SignalCard from "./components/SignalCard";
 import { MarginChart, PerChart, VixChart } from "./components/SignalCharts";
 import ModuleC from "./components/ModuleC";
 import ModuleD from "./components/ModuleD";
+import UsReference from "./components/UsReference";
+import Backtest from "./components/Backtest";
 import { fmtNum } from "./lib/format";
 
 export default function App() {
   const [result, setResult] = useState<RiskResult | null>(null);
   const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
+  const [us, setUs] = useState<UsReferenceResponse | null>(null);
+  const [bt, setBt] = useState<BacktestResponse | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchRisk().then(setResult);
     fetchConfig().then(setConfig);
+    fetchUsReference().then(setUs);
+    fetchBacktest(20).then(setBt);
   }, []);
 
   async function handleRefresh() {
@@ -118,6 +131,20 @@ export default function App() {
         {/* 模組D：兩大隱形坑計算機 */}
         <h2 className="mb-3 mt-8 text-lg font-semibold text-ink">兩大隱形坑計算機</h2>
         <ModuleD tax={config.tax} etf={config.etf} />
+
+        {/* Phase 3：美股對照指標 */}
+        {us && (
+          <div className="mt-8">
+            <UsReference data={us} />
+          </div>
+        )}
+
+        {/* Phase 3：風險分數歷史回測 */}
+        {bt && (
+          <div className="mt-8">
+            <Backtest initial={bt} />
+          </div>
+        )}
 
         <footer className="mt-8 text-center text-xs leading-relaxed text-subtle">
           {data.disclaimer}

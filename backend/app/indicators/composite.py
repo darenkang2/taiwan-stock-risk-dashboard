@@ -40,7 +40,8 @@ def _weighted(mi_s: float, per_s: float, vol_s: float,
     return clamp(mi_s * wts[0] + per_s * wts[1] + vol_s * wts[2])
 
 
-def compute_trend(data: MarketData, s: Settings) -> list[TrendPoint]:
+def daily_scores(data: MarketData, s: Settings, last_n: int | None = None) -> list[TrendPoint]:
+    """逐日重算綜合分數。last_n=None 時回傳所有可算日（給回測用）。"""
     margin = np.array(data.margin.values, dtype=float)
     inst = np.array(data.institutional.values, dtype=float)
     per = np.array(data.per.values, dtype=float)
@@ -49,22 +50,22 @@ def compute_trend(data: MarketData, s: Settings) -> list[TrendPoint]:
     wts = _normalized_weights(s)
     win = s.windows
 
-    n_days = min(win.composite_trend_days, len(margin), len(per), len(vix))
+    total = min(len(margin), len(per), len(vix), len(dates))
+    n_days = total if last_n is None else min(last_n, total)
     points: list[TrendPoint] = []
     for j in range(n_days - 1, -1, -1):
-        m = margin[: len(margin) - j]
-        i = inst[: len(inst) - j]
-        p = per[: len(per) - j]
-        v = vix[: len(vix) - j]
         score = _weighted(
-            mi.subscore(m, i, win),
-            pe.subscore(p, win),
-            vo.subscore(v, win),
+            mi.subscore(margin[: len(margin) - j], inst[: len(inst) - j], win),
+            pe.subscore(per[: len(per) - j], win),
+            vo.subscore(vix[: len(vix) - j], win),
             wts,
         )
-        idx = len(dates) - 1 - j
-        points.append(TrendPoint(date=dates[idx], score=round(score, 1)))
+        points.append(TrendPoint(date=dates[total - 1 - j], score=round(score, 1)))
     return points
+
+
+def compute_trend(data: MarketData, s: Settings) -> list[TrendPoint]:
+    return daily_scores(data, s, last_n=s.windows.composite_trend_days)
 
 
 def evaluate(data: MarketData, s: Settings,

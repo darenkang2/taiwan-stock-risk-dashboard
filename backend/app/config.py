@@ -123,6 +123,17 @@ class AlertConfig:
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
     composite_alert_threshold: float = 70.0  # 綜合分數突破即推播
+    # Email（SMTP）警示，留空則不寄送
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    email_from: str = ""
+    email_to: str = ""
+    # 每週摘要推播時點（週一早上）
+    weekly_summary_enabled: bool = True
+    weekly_summary_hour: int = 8
+    weekly_summary_minute: int = 0
 
 
 @dataclass(frozen=True)
@@ -159,6 +170,15 @@ def load_settings() -> Settings:
             telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", "").strip(),
             composite_alert_threshold=_get_float("COMPOSITE_ALERT_THRESHOLD", 70.0),
+            smtp_host=os.getenv("SMTP_HOST", "").strip(),
+            smtp_port=_get_int("SMTP_PORT", 587),
+            smtp_user=os.getenv("SMTP_USER", "").strip(),
+            smtp_password=os.getenv("SMTP_PASSWORD", "").strip(),
+            email_from=os.getenv("EMAIL_FROM", "").strip(),
+            email_to=os.getenv("EMAIL_TO", "").strip(),
+            weekly_summary_enabled=_get_bool("WEEKLY_SUMMARY_ENABLED", True),
+            weekly_summary_hour=_get_int("WEEKLY_SUMMARY_HOUR", 8),
+            weekly_summary_minute=_get_int("WEEKLY_SUMMARY_MINUTE", 0),
         ),
     )
 

@@ -2,10 +2,12 @@
 // 讓前端可獨立跑起來（PRD：前端先用假資料跑起來，再接後端）。
 // 情境刻意對應「多頭末段」：融資創高、法人轉賣、本益比偏高、波動率極低。
 import type {
+  BacktestResponse,
   MarginPoint,
   PerPoint,
   RiskResponse,
   TrendPoint,
+  UsReferenceResponse,
   VixPoint,
 } from "./types";
 
@@ -106,4 +108,40 @@ export const mockRisk: RiskResponse = {
   },
   disclaimer:
     "本工具僅為個人風險觀測用途，非投資建議。所有門檻為影片觀點之量化詮釋，非保證有效。",
+};
+
+// Phase 3 — 美股對照指標 fallback
+const usSeries = (base: number, slope: number, end: number) =>
+  ds.slice(-90).map((date, i, a) => ({
+    date,
+    value: Math.round((base + slope * i + (i / a.length) * end + noise(i, 1)) * 100) / 100,
+  }));
+
+export const mockUsReference: UsReferenceResponse = {
+  source: "mock",
+  is_mock: true,
+  indicators: [
+    { name: "美股 VIX", light: "red", current: 9.79, pctile: 0.4, score: 99.6, unit: "", hint: "低波動＝市場過度樂觀（反直覺）", series: usSeries(16, 0, -6) },
+    { name: "Shiller CAPE", light: "yellow", current: 37.38, pctile: 93.5, score: 93.5, unit: "倍", hint: "週期調整本益比，越高越貴", series: usSeries(32, 0.05, 0) },
+    { name: "巴菲特指標", light: "red", current: 195.1, pctile: 96.5, score: 96.5, unit: "%", hint: "股市總市值 / GDP，越高越貴", series: usSeries(180, 0.15, 0) },
+  ],
+};
+
+// Phase 3 — 歷史回測 fallback
+export const mockBacktest: BacktestResponse = {
+  data_source: "mock",
+  is_mock: true,
+  horizon: 20,
+  correlation: -0.46,
+  buckets: [
+    { light: "green", label: "風險低 (0–40)", count: 29, avg_forward_return: 5.1 },
+    { light: "yellow", label: "留意 (40–70)", count: 166, avg_forward_return: 3.93 },
+    { light: "red", label: "高風險 (70–100)", count: 185, avg_forward_return: 1.2 },
+  ],
+  points: trend.map((p, i) => ({
+    date: p.date,
+    score: p.score,
+    index: 18000 + i * 12 + noise(i, 80),
+    forward_return: Math.round((6 - (p.score / 100) * 7 + noise(i, 3)) * 100) / 100,
+  })),
 };

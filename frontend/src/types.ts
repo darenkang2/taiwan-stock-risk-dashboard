@@ -67,6 +67,53 @@ export interface Composite {
   trend: TrendPoint[];
 }
 
+// ── Phase 3：美股對照指標 ───────────────────────────────
+export interface UsPoint {
+  date: string;
+  value: number;
+}
+
+export interface UsIndicator {
+  name: string;
+  light: Light;
+  current: number;
+  pctile: number;
+  score: number;
+  unit: string;
+  hint: string;
+  series: UsPoint[];
+}
+
+export interface UsReferenceResponse {
+  source: string;
+  is_mock: boolean;
+  indicators: UsIndicator[];
+}
+
+// ── Phase 3：歷史回測 ───────────────────────────────────
+export interface BacktestPoint {
+  date: string;
+  score: number;
+  index: number;
+  forward_return: number;
+}
+
+export interface BacktestBucket {
+  light: Light;
+  label: string;
+  count: number;
+  avg_forward_return: number;
+}
+
+export interface BacktestResponse {
+  data_source: string;
+  is_mock: boolean;
+  horizon: number;
+  correlation: number;
+  buckets: BacktestBucket[];
+  points: BacktestPoint[];
+}
+
 export interface RiskResponse {
   updated_at: string;
   data_source: string;

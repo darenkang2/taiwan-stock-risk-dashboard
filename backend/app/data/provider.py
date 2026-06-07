@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from ..config import Settings, resolve_data_source
-from . import MarketData
+from . import MarketData, UsReference
 from . import finmind_client as fm
 from . import mock_provider
 
@@ -26,12 +26,22 @@ def get_market_data(settings: Settings) -> MarketData:
         logger.warning("FinMind 抓取失敗，fallback mock：%s", exc)
         return mock_provider.generate()
 
-    # 台指波動率(VIXTWN) 尚未串接 TAIFEX → 永遠以 mock 佔位 (TODO)
+    # 台指波動率(VIXTWN) 與加權指數先以 mock 佔位 (TODO: 串 TAIFEX / FinMind 指數)
     mock = mock_provider.generate()
     return MarketData(
         margin=margin,
         institutional=institutional,
         per=per,
         vix=mock.vix,
+        index=mock.index,
         source="finmind",
     )
+
+
+def get_us_reference(settings: Settings) -> UsReference:
+    """美股對照指標（國際對照，可選）。
+
+    TODO: 實接 ^VIX（Yahoo）、Shiller CAPE（multpl.com）、巴菲特指標（FRED）。
+    目前一律以 mock 佔位。
+    """
+    return mock_provider.generate_us_reference()

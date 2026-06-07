@@ -88,6 +88,53 @@ class RiskResponse(BaseModel):
     disclaimer: str = "本工具僅為個人風險觀測用途，非投資建議。所有門檻為影片觀點之量化詮釋，非保證有效。"
 
 
+# ── Phase 3：美股對照指標 ───────────────────────────────────────────────
+class UsPoint(BaseModel):
+    date: str
+    value: float
+
+
+class UsIndicator(BaseModel):
+    name: str
+    light: Light
+    current: float
+    pctile: float
+    score: float
+    unit: str
+    hint: str
+    series: list[UsPoint]
+
+
+class UsReferenceResponse(BaseModel):
+    source: str
+    is_mock: bool
+    indicators: list[UsIndicator]
+
+
+# ── Phase 3：風險分數歷史回測 ──────────────────────────────────────────
+class BacktestPoint(BaseModel):
+    date: str
+    score: float
+    index: float
+    forward_return: float   # N 日後加權指數報酬 (%)
+
+
+class BacktestBucket(BaseModel):
+    light: Light
+    label: str
+    count: int
+    avg_forward_return: float
+
+
+class BacktestResponse(BaseModel):
+    data_source: str
+    is_mock: bool
+    horizon: int            # 前瞻天數
+    correlation: float      # 風險分數 vs 後續報酬 相關係數
+    buckets: list[BacktestBucket]
+    points: list[BacktestPoint]
+
+
 class ConfigResponse(BaseModel):
     windows: dict
     thresholds: dict

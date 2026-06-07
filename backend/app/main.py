@@ -14,9 +14,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi import Query
+
 from .config import resolve_data_source, settings
-from .schemas import ConfigResponse, RiskResponse
-from .services import risk_service
+from .data.provider import get_us_reference
+from .indicators import us_reference
+from .schemas import (
+    BacktestResponse,
+    ConfigResponse,
+    RiskResponse,
+    UsReferenceResponse,
+)
+from .services import backtest, risk_service
 from . import scheduler
 
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +63,19 @@ def get_risk() -> RiskResponse:
 @app.post("/api/refresh", response_model=RiskResponse)
 def post_refresh() -> RiskResponse:
     return risk_service.refresh(settings)
+
+
+@app.get("/api/us-reference", response_model=UsReferenceResponse)
+def get_us_reference_endpoint() -> UsReferenceResponse:
+    """Phase 3：美股對照指標（^VIX / CAPE / 巴菲特指標）。"""
+    ref = get_us_reference(settings)
+    return us_reference.evaluate(ref, settings.windows, settings.thresholds)
+
+
+@app.get("/api/backtest", response_model=BacktestResponse)
+def get_backtest(horizon: int = Query(20, ge=5, le=120)) -> BacktestResponse:
+    """Phase 3：風險分數歷史回測（對照 N 日後加權指數報酬）。"""
+    return backtest.run(settings, horizon=horizon)
 
 
 @app.get("/api/config", response_model=ConfigResponse)

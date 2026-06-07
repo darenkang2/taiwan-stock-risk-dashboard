@@ -1,5 +1,9 @@
-import type { RiskResponse } from "./types";
-import { mockRisk } from "./mockData";
+import type {
+  BacktestResponse,
+  RiskResponse,
+  UsReferenceResponse,
+} from "./types";
+import { mockRisk, mockUsReference, mockBacktest } from "./mockData";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
@@ -33,5 +37,29 @@ export async function refreshRisk(): Promise<RiskResult> {
     return { data, usedFallback: false };
   } catch {
     return { data: mockRisk, usedFallback: true };
+  }
+}
+
+export async function fetchUsReference(): Promise<UsReferenceResponse> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/us-reference`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return (await resp.json()) as UsReferenceResponse;
+  } catch {
+    return mockUsReference;
+  }
+}
+
+export async function fetchBacktest(horizon = 20): Promise<BacktestResponse> {
+  try {
+    const resp = await fetch(`${API_BASE}/api/backtest?horizon=${horizon}`, {
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return (await resp.json()) as BacktestResponse;
+  } catch {
+    return mockBacktest;
   }
 }

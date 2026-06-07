@@ -23,6 +23,7 @@ def _make_data(margin, inst, per, vix) -> MarketData:
         institutional=Series(dates, inst),
         per=Series(dates, per),
         vix=Series(dates, vix),
+        index=Series(dates, [18000.0 + i for i in range(n)]),
         source="mock",
     )
 
@@ -118,3 +119,53 @@ def test_compute_end_to_end_mock():
         result.composite.light,
     ):
         assert light in ("green", "yellow", "red")
+
+
+# ── Phase 3：美股對照指標 ──────────────────────────────────────────────
+def test_us_reference_mock():
+    from app.data import mock_provider
+    from app.indicators import us_reference
+
+    ref = mock_provider.generate_us_reference()
+    out = us_reference.evaluate(ref, settings.windows, settings.thresholds)
+    assert out.is_mock is True
+    assert len(out.indicators) == 3
+    names = {i.name for i in out.indicators}
+    assert {"美股 VIX", "Shiller CAPE", "巴菲特指標"} == names
+    for ind in out.indicators:
+        assert ind.light in ("green", "yellow", "red")
+        assert 0 <= ind.pctile <= 100
+        assert len(ind.series) > 0
+
+
+# ── Phase 3：歷史回測 ─────────────────────────────────────────────────
+def test_backtest_mock():
+    from app.services import backtest
+
+    out = backtest.run(settings, horizon=20)
+    assert out.is_mock is True
+    assert out.horizon == 20
+    assert len(out.points) > 50
+    assert sum(b.count for b in out.buckets) == len(out.points)
+    assert -1.0 <= out.correlation <= 1.0
+    # 每個 bucket 的 light 應唯一且涵蓋三色
+    assert {b.light for b in out.buckets} == {"green", "yellow", "red"}
+
+
+def test_backtest_horizon_bounds():
+    from app.services import backtest
+
+    short = backtest.run(settings, horizon=10)
+    long = backtest.run(settings, horizon=60)
+    # 前瞻越長，可用樣本越少
+    assert len(long.points) <= len(short.points)
+
+
+# ── Phase 3：每週摘要文案 ─────────────────────────────────────────────
+def test_weekly_summary_text():
+    from app.services import alerts
+
+    result = risk_service.compute(settings)
+    text = alerts.build_weekly_summary(result)
+    assert "本週風險摘要" in text
+    assert "綜合風險分數" in text
