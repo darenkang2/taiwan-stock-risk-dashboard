@@ -62,4 +62,7 @@ def get_config() -> ConfigResponse:
         windows=settings.windows.__dict__,
         thresholds=settings.thresholds.__dict__,
         weights=settings.weights.__dict__,
+        tax=settings.tax.__dict__,
+        position=settings.position.__dict__,
+        etf=settings.etf.__dict__,
     )

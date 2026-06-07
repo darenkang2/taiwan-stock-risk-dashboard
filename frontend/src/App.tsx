@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
 import { fetchRisk, refreshRisk, type RiskResult } from "./api";
+import { fetchConfig, DEFAULT_CONFIG, type PlatformConfig } from "./lib/config";
 import Header from "./components/Header";
 import RiskGauge from "./components/RiskGauge";
 import SignalCard from "./components/SignalCard";
 import { MarginChart, PerChart, VixChart } from "./components/SignalCharts";
+import ModuleC from "./components/ModuleC";
+import ModuleD from "./components/ModuleD";
 import { fmtNum } from "./lib/format";
 
 export default function App() {
   const [result, setResult] = useState<RiskResult | null>(null);
+  const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchRisk().then(setResult);
+    fetchConfig().then(setConfig);
   }, []);
 
   async function handleRefresh() {
@@ -105,12 +110,14 @@ export default function App() {
           </SignalCard>
         </div>
 
-        {/* 後續模組 roadmap */}
-        <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white/50 p-5 text-sm text-subtle">
-          <span className="font-medium text-ink">規劃中（Phase 2）：</span>
-          模組C 倉位管理四鐵律（閒置資金檢核、-60% 壓力測試、融資紅線、緊急備用金）、
-          模組D 兩大隱形坑計算機（ETF 折溢價、股利稅＋二代健保補充保費）。
+        {/* 模組C：倉位管理四鐵律 */}
+        <div className="mt-8">
+          <ModuleC config={config.position} compositeLight={data.composite.light} />
         </div>
+
+        {/* 模組D：兩大隱形坑計算機 */}
+        <h2 className="mb-3 mt-8 text-lg font-semibold text-ink">兩大隱形坑計算機</h2>
+        <ModuleD tax={config.tax} etf={config.etf} />
 
         <footer className="mt-8 text-center text-xs leading-relaxed text-subtle">
           {data.disclaimer}

@@ -92,3 +92,6 @@ class ConfigResponse(BaseModel):
     windows: dict
     thresholds: dict
     weights: dict
+    tax: dict          # 模組D：二代健保補充保費費率 / 門檻 / 上限
+    position: dict     # 模組C：壓力測試跌幅、緊急備用金月數
+    etf: dict          # 模組D：ETF 折價提示門檻

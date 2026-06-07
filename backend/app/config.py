@@ -80,6 +80,24 @@ class TaxConfig:
     note: str = "2026 現制；改年度結算最快 2027，目前暫緩，請定期確認最新法規。"
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# 模組C：倉位管理四鐵律（Phase 2 互動檢核使用）
+# ──────────────────────────────────────────────────────────────────────────
+@dataclass(frozen=True)
+class PositionConfig:
+    stress_test_drop: float = 0.60          # -60% 壓力測試跌幅
+    emergency_fund_months_min: int = 3      # 緊急備用金月數下限
+    emergency_fund_months_max: int = 6      # 緊急備用金月數上限
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 模組D：ETF 折溢價（Phase 2 計算機使用）
+# ──────────────────────────────────────────────────────────────────────────
+@dataclass(frozen=True)
+class EtfConfig:
+    discount_alert_threshold: float = 1.0   # 折價超過此 %（門檻可調）即提示
+
+
 @dataclass(frozen=True)
 class FinMindConfig:
     base_url: str = "https://api.finmindtrade.com/api/v4/data"
@@ -115,6 +133,8 @@ class Settings:
     thresholds: Thresholds = field(default_factory=Thresholds)
     weights: Weights = field(default_factory=Weights)
     tax: TaxConfig = field(default_factory=TaxConfig)
+    position: PositionConfig = field(default_factory=PositionConfig)
+    etf: EtfConfig = field(default_factory=EtfConfig)
     finmind: FinMindConfig = field(default_factory=FinMindConfig)
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
     alerts: AlertConfig = field(default_factory=AlertConfig)
