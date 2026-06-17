@@ -1,0 +1,70 @@
+name: Deploy 台股風險儀表板 demo to GitHub Pages
+
+# split-out 獨立 repo 用：靜態 JSON + 每日 cron。
+#   Python build_static.py（FinMind + yfinance）→ frontend/public/data/*.json → 前端 build → Pages。
+#   未設 FINMIND_TOKEN 時資料自動 mock，demo 仍可完整操作。
+on:
+  schedule:
+    - cron: "0 22 * * 1-5" # 美股收盤後重算
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. 每日靜態資料（Python）
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend
+        working-directory: backend
+        run: pip install -e .
+      - name: Build static data (FinMind + yfinance → JSON)
+        working-directory: backend
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+          DATA_SOURCE: auto
+        run: python scripts/build_static.py
+
+      # 2. 前端 build（讀入 public/data/*.json）
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+        env:
+          VITE_BASE: /taiwan-stock-risk-dashboard/
+          VITE_API_BASE: "" # 線上無後端 → 走靜態 JSON / 內建 mock
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

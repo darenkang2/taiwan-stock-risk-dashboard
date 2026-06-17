@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+backend/cache/*.json
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# 每日靜態資料（由 GitHub Actions 在部署時產生；本機 dev 用 mockData.ts fallback）
+frontend/public/data/
+
+# Env
+.env
+.env.local
+
+# TS build info
+*.tsbuildinfo
